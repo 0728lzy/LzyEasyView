@@ -1,4 +1,4 @@
-package com.lzylym.viewlibrary;
+package com.lzylym.zymview.view;
 
 import android.content.Context;
 import android.content.res.TypedArray;

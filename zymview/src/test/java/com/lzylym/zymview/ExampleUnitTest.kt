@@ -1,4 +1,4 @@
-package com.lzylym.viewlibrary
+package com.lzylym.zymview
 
 import org.junit.Test
 

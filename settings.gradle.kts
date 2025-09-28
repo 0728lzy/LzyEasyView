@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "LzyEasyView"
 include(":app")
-include(":viewlibrary")
+include(":zymview")
