@@ -5,10 +5,10 @@ import android.widget.Toast
 
 object LzySay {
     fun sayHelloToLYM(context: Context){
-        Toast.makeText(context,"(*´▽｀)ノノ你好啊，卢奕民", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context,"(*´▽｀)ノノ你好啊，小Y", Toast.LENGTH_SHORT).show()
     }
 
     fun sayGoodNightToLYM(context: Context){
-        Toast.makeText(context,"晚安，小奕笨蛋~", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context,"晚安，笨蛋~", Toast.LENGTH_SHORT).show()
     }
 }
