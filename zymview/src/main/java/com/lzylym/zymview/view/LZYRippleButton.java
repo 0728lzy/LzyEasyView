@@ -15,6 +15,8 @@ import android.view.MotionEvent;
 
 import androidx.appcompat.widget.AppCompatTextView;
 
+import com.lzylym.zymview.R;
+
 public class LZYRippleButton extends AppCompatTextView {
     private Paint ripplePaint = new Paint();
     private RadialGradient radialGradient;
