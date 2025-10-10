@@ -20,4 +20,42 @@
         <attr name="cornerRadius" format="dimension"/>
         <attr name="cornerBackgroundColor" format="color" />
     </declare-styleable>
+
+    <declare-styleable name="ZYMExpandableQAView">
+        <!-- 问题 -->
+        <attr name="qa_questionText" format="string" />
+        <attr name="qa_questionTextSize" format="dimension" />
+        <attr name="qa_questionTextColor" format="color" />
+        <attr name="qa_questionTextStyle" format="enum">
+            <enum name="normal" value="0" />
+            <enum name="bold" value="1" />
+            <enum name="italic" value="2" />
+            <enum name="bold_italic" value="3" />
+        </attr>
+        <!-- 答案 -->
+        <attr name="qa_answerText" format="string" />
+        <attr name="qa_answerTextSize" format="dimension" />
+        <attr name="qa_answerTextColor" format="color" />
+        <attr name="qa_answerTextStyle" format="enum">
+            <enum name="normal" value="0" />
+            <enum name="bold" value="1" />
+            <enum name="italic" value="2" />
+            <enum name="bold_italic" value="3" />
+        </attr>
+        <!-- 图标 -->
+        <attr name="qa_iconSrc" format="reference" />
+        <attr name="qa_iconWidth" format="dimension" />
+        <attr name="qa_iconHeight" format="dimension" />
+        <attr name="qa_iconTint" format="color" />
+        <!-- 分割线 -->
+        <attr name="qa_dividerHeight" format="dimension" />
+        <attr name="qa_dividerMarginHorizontal" format="dimension"/>
+        <attr name="qa_dividerMarginVertical" format="dimension"/>
+        <attr name="qa_dividerColor" format="color" />
+        <!-- 小巧思 -->
+        <attr name="qa_expandAnimType" format="enum">
+            <enum name="fade" value="0"/>
+            <enum name="slide" value="1"/>
+        </attr>
+    </declare-styleable>
 </resources>
