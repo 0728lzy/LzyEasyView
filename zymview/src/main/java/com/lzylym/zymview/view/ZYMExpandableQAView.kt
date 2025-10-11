@@ -108,7 +108,10 @@ class ZYMExpandableQAView @JvmOverloads constructor(
     }
 
     private fun slideExpand(view: View) {
-        view.measure(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        view.measure(
+            MeasureSpec.makeMeasureSpec((view.parent as View).width, MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        )
         val targetHeight = view.measuredHeight
         view.layoutParams.height = 0
         view.visibility = View.VISIBLE
@@ -123,6 +126,10 @@ class ZYMExpandableQAView @JvmOverloads constructor(
     }
 
     private fun slideCollapse(view: View) {
+        view.measure(
+            MeasureSpec.makeMeasureSpec((view.parent as View).width, MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        )
         val initialHeight = view.measuredHeight
         val animator = ValueAnimator.ofInt(initialHeight, 0)
         animator.addUpdateListener {
