@@ -58,4 +58,9 @@
             <enum name="slide" value="1"/>
         </attr>
     </declare-styleable>
+
+    <declare-styleable name="ZYMDoubleBorderLayout">
+        <attr name="borderBackground1" format="reference" />
+        <attr name="borderBackground2" format="reference" />
+    </declare-styleable>
 </resources>
