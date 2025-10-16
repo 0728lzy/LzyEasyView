@@ -63,4 +63,22 @@
         <attr name="borderBackground1" format="reference" />
         <attr name="borderBackground2" format="reference" />
     </declare-styleable>
+
+    <declare-styleable name="ZYMClockSelectorView">
+        <attr name="zym_textSize" format="dimension"/>
+        <attr name="zym_textColor" format="color"/>
+        <attr name="zym_circleRadius" format="dimension"/>
+        <attr name="zym_circleColor" format="color"/>
+        <attr name="zym_pointerWidth" format="dimension"/>
+        <attr name="zym_pointerColor" format="color"/>
+        <attr name="zym_centerDotColor" format="color"/>
+        <attr name="zym_mode" format="enum">
+            <enum name="hour" value="0"/>
+            <enum name="minute" value="1"/>
+            <enum name="hour_minute" value="2"/>
+        </attr>
+        <attr name="zym_pointerInnerPadding" format="float"/>
+        <attr name="zym_pointerOuterPadding" format="float"/>
+        <attr name="zym_dragStartRatio" format="float"/>
+    </declare-styleable>
 </resources>
