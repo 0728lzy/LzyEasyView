@@ -61,6 +61,29 @@ class ReminderReceiver : BroadcastReceiver() {
         }
     }
 
+    fun cancelReminder(context: Context, notificationId: Int) {
+        val serviceIntent = Intent(context, ReminderService::class.java)
+        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(
+                context,
+                notificationId,
+                serviceIntent,
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+        } else {
+            PendingIntent.getService(
+                context,
+                notificationId,
+                serviceIntent,
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+        if (pendingIntent == null) return
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        am.cancel(pendingIntent)
+        pendingIntent.cancel()
+    }
+
     override fun onReceive(context: Context, intent: Intent?) {
 
     }
