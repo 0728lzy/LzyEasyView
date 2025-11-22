@@ -40,6 +40,7 @@ class ReminderService : Service() {
         val fullIntent = Intent(this, ReminderFullScreenActivity::class.java).apply {
             putExtra("title", title)
             putExtra("content", content)
+            putExtra("notificationId",notificationId)
         }
         val contentPi = PendingIntent.getActivity(
             this,

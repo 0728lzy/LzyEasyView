@@ -14,11 +14,13 @@ class ReminderFullScreenActivity : AppCompatActivity() {
 
         val title = intent.getStringExtra("title") ?: "提醒"
         val content = intent.getStringExtra("content") ?: "事件提醒"
+        val notificationId=intent.getIntExtra("notificationId",0)
 
         findViewById<TextView>(R.id.tv_title).text = title
         findViewById<TextView>(R.id.tv_content).text = content
 
         findViewById<Button>(R.id.btn_close).setOnClickListener {
+            ReminderReceiver.cancelReminder(this@ReminderFullScreenActivity,notificationId)
             finish()
         }
     }
