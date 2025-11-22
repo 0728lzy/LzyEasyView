@@ -96,4 +96,39 @@
         <!-- 外圈距离刻度线的间距，默认3dp -->
         <attr name="zym_outerCircleGap" format="dimension" />
     </declare-styleable>
+
+    <declare-styleable name="ZYMTrendLineView">
+        <!-- 波形图与坐标文字的间距，默认 8dp -->
+        <attr name="zym_axis_text_margin" format="dimension"/>
+        <!-- 数据最大值，默认 100f -->
+        <attr name="zym_max_value" format="float"/>
+        <!-- 数据最小值，默认 0f -->
+        <attr name="zym_min_value" format="float"/>
+        <!-- 数据单位，例如 % 或 °C -->
+        <attr name="zym_unit" format="string"/>
+        <!-- 是否显示左侧 Y 轴文字，默认 true -->
+        <attr name="zym_show_y_text" format="boolean"/>
+        <!-- 左侧坐标文字大小，默认 12dp -->
+        <attr name="zym_text_size" format="dimension"/>
+        <!-- 左侧 Y 轴显示的标签数量，默认 6 -->
+        <attr name="zym_y_label_count" format="integer"/>
+        <!-- 左侧 Y 轴文字颜色，默认黑色 -->
+        <attr name="zym_text_color" format="color"/>
+        <!-- 折线颜色，默认 #AA00FF -->
+        <attr name="zym_stroke_color" format="color"/>
+        <!-- 折线宽度，默认 2dp -->
+        <attr name="zym_stroke_width" format="dimension"/>
+        <!-- 下方渐变区域起始颜色，默认 #80AA00FF -->
+        <attr name="zym_fill_start_color" format="color"/>
+        <!-- 下方渐变区域结束颜色，默认 #10AA00FF -->
+        <attr name="zym_fill_end_color" format="color"/>
+        <!-- 绘制区域内的可见数据点数量，默认 10 -->
+        <attr name="zym_visible_point_count" format="integer"/>
+        <!-- 线条类型：折线 或 平滑曲线 -->
+        <attr name="zym_line_type" format="enum">
+            <enum name="polyline" value="0"/>
+            <enum name="smooth" value="1"/>
+        </attr>
+    </declare-styleable>
+
 </resources>
