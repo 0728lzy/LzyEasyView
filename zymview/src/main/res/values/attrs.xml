@@ -81,4 +81,19 @@
         <attr name="zym_pointerOuterPadding" format="float"/>
         <attr name="zym_dragStartRatio" format="float"/>
     </declare-styleable>
+
+    <declare-styleable name="ZYMCompassView">
+        <!-- 表盘背景颜色，默认白色 -->
+        <attr name="zym_dialBackgroundColor" format="color" />
+        <!-- 东南西北字体大小，默认16dp -->
+        <attr name="zym_cardinalTextSize" format="dimension" />
+        <!-- 刻度数字字体大小，默认14dp -->
+        <attr name="zym_numberTextSize" format="dimension" />
+        <!-- 北向指针和文字颜色，默认红色 -->
+        <attr name="zym_northColor" format="color" />
+        <!-- 指针长度比例 (相对于半径)，默认0.7 (即半径的70%) -->
+        <attr name="zym_pointerScale" format="float" />
+        <!-- 外圈距离刻度线的间距，默认3dp -->
+        <attr name="zym_outerCircleGap" format="dimension" />
+    </declare-styleable>
 </resources>
