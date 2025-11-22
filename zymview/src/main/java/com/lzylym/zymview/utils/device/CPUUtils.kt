@@ -4,7 +4,10 @@ import android.content.Context
 
 object CPUUtils {
 
-    private var monitor: CpuTempMonitor? = null
+    private var tempMonitor: CpuTempMonitor? = null
+    private var usageMonitor: CpuUsageRateMonitor? = null
+
+    /** ---------------- CPU 温度 ---------------- **/
 
     fun startCpuTemperatureMonitor(
         context: Context,
@@ -12,16 +15,36 @@ object CPUUtils {
         intervalMs: Long = 1000,
         callback: (Float?) -> Unit
     ) {
-        if (monitor == null) monitor = CpuTempMonitor(context)
-        monitor?.startMonitoring(times, intervalMs, callback)
+        if (tempMonitor == null) tempMonitor = CpuTempMonitor(context)
+        tempMonitor?.startMonitoring(times, intervalMs, callback)
     }
 
     fun stopCpuTemperatureMonitor() {
-        monitor?.stopMonitoring()
+        tempMonitor?.stopMonitoring()
     }
 
     fun releaseCpuTemperatureMonitor() {
-        monitor?.release()
-        monitor = null
+        tempMonitor?.release()
+        tempMonitor = null
+    }
+
+    /** ---------------- CPU 使用率 ---------------- **/
+
+    fun startCpuUsageRateMonitor(
+        context: Context,
+        intervalMs: Long = 1000,
+        callback: (Float) -> Unit
+    ) {
+        if (usageMonitor == null) usageMonitor = CpuUsageRateMonitor(context)
+        usageMonitor?.startMonitoring(intervalMs, callback)
+    }
+
+    fun stopCpuUsageRateMonitor() {
+        usageMonitor?.stopMonitoring()
+    }
+
+    fun releaseCpuUsageRateMonitor() {
+        usageMonitor?.release()
+        usageMonitor = null
     }
 }
