@@ -58,7 +58,7 @@ class ZYMArcProgressBar @JvmOverloads constructor(
         targetProgress = ta.getFloat(R.styleable.ZYMArcProgressBar_zym_progress, min).coerceIn(min, max)
         progress = targetProgress
 
-        strokeWidth = ta.getDimension(R.styleable.ZYMArcProgressBar_zym_stroke_width, 20f)
+        strokeWidth = ta.getDimension(R.styleable.ZYMCommon_zym_stroke_width, 20f)
 
         if (ta.hasValue(R.styleable.ZYMArcProgressBar_zym_progress_color)) {
             val value = ta.peekValue(R.styleable.ZYMArcProgressBar_zym_progress_color)

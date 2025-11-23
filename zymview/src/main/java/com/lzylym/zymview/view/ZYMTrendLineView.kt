@@ -88,7 +88,7 @@ class ZYMTrendLineView @JvmOverloads constructor(
             yLabelCount = ta.getInt(R.styleable.ZYMTrendLineView_zym_y_label_count, 6)
             axisTextColor = ta.getColor(R.styleable.ZYMTrendLineView_zym_text_color, Color.BLACK)
             strokeColor = ta.getColor(R.styleable.ZYMTrendLineView_zym_stroke_color, Color.parseColor("#AA00FF"))
-            lineStrokeWidth = ta.getDimension(R.styleable.ZYMTrendLineView_zym_stroke_width, 2f.dp)
+            lineStrokeWidth = ta.getDimension(R.styleable.ZYMCommon_zym_stroke_width, 2f.dp)
             fillStartColor = ta.getColor(R.styleable.ZYMTrendLineView_zym_fill_start_color, Color.parseColor("#80AA00FF"))
             fillEndColor = ta.getColor(R.styleable.ZYMTrendLineView_zym_fill_end_color, Color.parseColor("#10AA00FF"))
             visiblePointCount = ta.getInt(R.styleable.ZYMTrendLineView_zym_visible_point_count, 10)
