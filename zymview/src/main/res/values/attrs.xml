@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 公共属性  -->
+    <attr name="zym_stroke_width" format="dimension" />
+
     <declare-styleable name="SmoothCheckBox">
         <attr name="duration" format="integer" />
         <attr name="stroke_width" format="dimension" />
@@ -7,10 +10,6 @@
         <attr name="color_checked" format="color" />
         <attr name="color_unchecked" format="color" />
         <attr name="color_unchecked_stroke" format="color" />
-    </declare-styleable>
-
-    <declare-styleable name="ZYMCommon">
-        <attr name="zym_stroke_width" format="dimension" />
     </declare-styleable>
 
     <declare-styleable name="LZYRippleButton">
@@ -121,7 +120,7 @@
         <!-- 折线颜色，默认 #AA00FF -->
         <attr name="zym_stroke_color" format="color"/>
         <!-- 折线宽度，默认 2dp -->
-<!--        <attr name="zym_stroke_width" format="dimension"/>-->
+        <attr name="zym_stroke_width" />
         <!-- 下方渐变区域起始颜色，默认 #80AA00FF -->
         <attr name="zym_fill_start_color" format="color"/>
         <!-- 下方渐变区域结束颜色，默认 #10AA00FF -->
@@ -143,7 +142,7 @@
         <!-- 当前进度，默认与最小值相同 -->
         <attr name="zym_progress" format="float" />
         <!-- 进度条宽度，默认20dp -->
-<!--        <attr name="zym_stroke_width" format="dimension" />-->
+        <attr name="zym_stroke_width"/>
         <!-- 进度条颜色或 drawable -->
         <attr name="zym_progress_color" format="color|reference" />
         <!-- 背景轨道颜色，默认浅灰色 -->
