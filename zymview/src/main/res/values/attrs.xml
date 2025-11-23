@@ -131,37 +131,4 @@
         </attr>
     </declare-styleable>
 
-    <declare-styleable name="ZYMArcProgressBar">
-        <!-- 最大值，默认100 -->
-        <attr name="zym_max" format="float" />
-        <!-- 最小值，默认0 -->
-        <attr name="zym_min" format="float" />
-        <!-- 当前进度，默认与最小值相同 -->
-        <attr name="zym_progress" format="float" />
-        <!-- 进度条宽度，默认20dp -->
-        <attr name="zym_stroke_width" format="dimension" />
-        <!-- 进度条颜色或 drawable -->
-        <attr name="zym_progress_color" format="color|reference" />
-        <!-- 背景轨道颜色，默认浅灰色 -->
-        <attr name="zym_track_color" format="color" />
-        <!-- 起始角度，默认-90度（顶部） -->
-        <attr name="zym_start_angle" format="float" />
-        <!-- 扫描角度，默认360度 -->
-        <attr name="zym_sweep_angle" format="float" />
-        <!-- 是否使用圆角端点，默认false -->
-        <attr name="zym_round_cap" format="boolean" />
-        <!-- 是否显示内侧刻度数字，默认false -->
-        <attr name="zym_show_labels" format="boolean" />
-        <!-- 内侧刻度数量，默认6 -->
-        <attr name="zym_label_count" format="integer" />
-        <!-- 内侧刻度文字大小，默认12dp -->
-        <attr name="zym_label_text_size" format="dimension" />
-        <!-- 内侧刻度文字距离圆弧的间距，默认4dp -->
-        <attr name="zym_label_distance" format="dimension" />
-        <!-- 内侧刻度激活状态颜色（已达到进度），默认黑色 -->
-        <attr name="zym_label_active_color" format="color" />
-        <!-- 内侧刻度非激活状态颜色（未达到进度），默认灰色 -->
-        <attr name="zym_label_inactive_color" format="color" />
-    </declare-styleable>
-
 </resources>
