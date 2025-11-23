@@ -167,4 +167,10 @@
         <!-- 内侧刻度非激活状态颜色（未达到进度），默认灰色 -->
         <attr name="zym_label_inactive_color" format="color" />
     </declare-styleable>
+
+    <declare-styleable name="ZYMBottomNavigationView">
+        <!-- 定义最大 item 数量属性，默认7个 -->
+        <attr name="zym_max_item_count" format="integer" />
+    </declare-styleable>
+
 </resources>
