@@ -5,6 +5,11 @@ import android.content.pm.PackageManager
 import android.opengl.GLES20
 import android.os.Build
 import android.util.Log
+import com.lzylym.zymview.utils.device.DeviceInfoHelper.getAppInfo
+import com.lzylym.zymview.utils.device.DeviceInfoHelper.getDeviceInfo
+import com.lzylym.zymview.utils.device.DeviceInfoHelper.getScreenInfo
+import com.lzylym.zymview.utils.device.DeviceInfoHelper.getStorageInfo
+import com.lzylym.zymview.utils.device.DeviceInfoHelper.getSystemInfo
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -305,5 +310,15 @@ object DeviceInfoUtils {
         Log.d(TAG, "最大纹理尺寸: $maxTextureSize")
         Log.d(TAG, "GPU扩展: $extensions")
         Log.d(TAG, "================= GPU 信息结束 =================")
+    }
+
+    /** 获取所有信息 */
+    fun getGlobalDeviceInfo(context: Context): AllInfoBean {
+        val device = getDeviceInfo()
+        val system = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) getSystemInfo() else null
+        val screen = getScreenInfo(context)
+        val storage = getStorageInfo()
+        val app = getAppInfo(context)
+        return AllInfoBean(deviceInfo = device, systemInfo = system, screenInfo = screen, storageInfo = storage, appInfo = app)
     }
 }
