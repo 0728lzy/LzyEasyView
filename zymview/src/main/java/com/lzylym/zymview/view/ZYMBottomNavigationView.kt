@@ -11,24 +11,8 @@ class ZYMBottomNavigationView @JvmOverloads constructor(
     @Nullable attrs: AttributeSet? = null
 ) : BottomNavigationView(context, attrs) {
 
-    private var customMaxItemCount: Int = 7
-
-    init {
-        attrs?.let {
-            val typedArray = context.obtainStyledAttributes(it, R.styleable.ZYMBottomNavigationView)
-            customMaxItemCount = typedArray.getInt(
-                R.styleable.ZYMBottomNavigationView_zym_max_item_count,
-                7
-            )
-            typedArray.recycle()
-        }
-    }
-
     override fun getMaxItemCount(): Int {
-        return customMaxItemCount
+        return 7
     }
 
-    fun setZymMaxItemCount(count: Int) {
-        this.customMaxItemCount = count
-    }
 }
