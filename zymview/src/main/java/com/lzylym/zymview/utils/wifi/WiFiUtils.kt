@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.DhcpInfo
 import android.net.LinkProperties
 import android.net.wifi.ScanResult
@@ -11,6 +12,8 @@ import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import java.net.Inet6Address
@@ -373,6 +376,53 @@ object WiFiUtils {
             upper.contains("EAP") -> "EAP"
             upper.contains("OWE") -> "OWE"
             else -> "Open"
+        }
+    }
+
+    fun getNetworkType(context: Context): String {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+        var networkType = "NONE"
+        if (connectivityManager != null) {
+            networkType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val nw = connectivityManager.activeNetwork
+                val actNw = connectivityManager.getNetworkCapabilities(nw)
+                when {
+                    actNw == null -> "NONE"
+                    actNw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "WIFI"
+                    actNw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "MOBILE"
+                    else -> "UNKNOWN"
+                }
+            } else {
+                val nwInfo = connectivityManager.activeNetworkInfo
+                when {
+                    nwInfo == null || !nwInfo.isConnected -> "NONE"
+                    nwInfo.type == ConnectivityManager.TYPE_WIFI -> "WIFI"
+                    nwInfo.type == ConnectivityManager.TYPE_MOBILE -> "MOBILE"
+                    else -> "UNKNOWN"
+                }
+            }
+        }
+        return networkType
+    }
+
+    fun isGpsEnabled(context: Context): Boolean {
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        return try {
+            locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun isAirplaneModeOn(context: Context): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                Settings.Global.getInt(context.contentResolver, Settings.Global.AIRPLANE_MODE_ON, 0) != 0
+            } else {
+                Settings.System.getInt(context.contentResolver, Settings.System.AIRPLANE_MODE_ON, 0) != 0
+            }
+        } catch (_: Exception) {
+            false
         }
     }
 }
