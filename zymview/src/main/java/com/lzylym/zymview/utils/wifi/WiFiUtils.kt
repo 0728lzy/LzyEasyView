@@ -1,6 +1,7 @@
 package com.lzylym.zymview.utils.wifi
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.DhcpInfo
@@ -20,46 +21,77 @@ import kotlin.math.pow
 
 object WiFiUtils {
 
+    private val EMPTY_INFO = WiFiFullInfo(
+        ssid = "",
+        bssid = "",
+        interfaceName = "",
+        rssi = 0,
+        level = 0,
+        frequency = 0,
+        frequencyBand = "",
+        channel = 0,
+        linkSpeed = 0,
+        distanceMeters = 0.0,
+        bandwidth = 0,
+        frequencyRange = "",
+        wifiStandard = "",
+        ipAddress = "",
+        ipv6Address = "",
+        gateway = "",
+        subnetMask = "",
+        dns1 = "",
+        dns2 = "",
+        leaseDuration = 0,
+        capabilities = "",
+        securityType = ""
+    )
+
     @RequiresApi(Build.VERSION_CODES.M)
-    fun getCurrentWiFiInfo(context: Context): WiFiFullInfo? {
-        val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+    fun getCurrentWiFiInfo(context: Context): WiFiFullInfo {
+        val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            ?: return EMPTY_INFO
 
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return null
+        val hasLocationPermission = ActivityCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val wifiInfo: WifiInfo? = try { wifiManager.connectionInfo } catch (_: Exception) { null }
+        val dhcpInfo: DhcpInfo? = try { wifiManager.dhcpInfo } catch (_: Exception) { null }
+
+        if (wifiInfo == null && dhcpInfo == null) return EMPTY_INFO
+
+        val rawSsid = try { wifiInfo?.ssid } catch (_: Exception) { null }
+        val ssid = when {
+            rawSsid == null -> ""
+            rawSsid == "<unknown ssid>" -> ""
+            else -> rawSsid.replace("\"", "")
         }
 
-        val wifiInfo: WifiInfo = wifiManager.connectionInfo ?: return null
-        val dhcpInfo: DhcpInfo = wifiManager.dhcpInfo
+        val bssid = try { wifiInfo?.bssid ?: "" } catch (_: Exception) { "" }
+        val interfaceName = getInterfaceName() ?: ""
+        val rssi = try { wifiInfo?.rssi ?: 0 } catch (_: Exception) { 0 }
+        val frequency = try { wifiInfo?.frequency ?: 0 } catch (_: Exception) { 0 }
+        val frequencyBand = if (frequency > 0) getFrequencyBand(frequency) else ""
+        val channel = if (frequency > 0) getChannelFromFrequency(frequency) else 0
+        val linkSpeed = try { wifiInfo?.linkSpeed ?: 0 } catch (_: Exception) { 0 }
 
-        if (wifiInfo.bssid == null || wifiInfo.networkId == -1) {
-            return null
-        }
+        val level = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && wifiInfo != null) {
+                try { wifiManager.calculateSignalLevel(rssi) } catch (_: Exception) { WifiManager.calculateSignalLevel(rssi, 5) }
+            } else {
+                WifiManager.calculateSignalLevel(rssi, 5)
+            }
+        } catch (_: Exception) { 0 }
 
-        val ssid = wifiInfo.ssid.replace("\"", "")
-        val bssid = wifiInfo.bssid
-        val interfaceName = getInterfaceName()
-
-        val rssi = wifiInfo.rssi
-        val frequency = wifiInfo.frequency
-        val frequencyBand = getFrequencyBand(frequency)
-        val channel = getChannelFromFrequency(frequency)
-        val linkSpeed = wifiInfo.linkSpeed
-
-        val level = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            wifiManager.calculateSignalLevel(rssi)
-        } else {
-            WifiManager.calculateSignalLevel(rssi, 5)
-        }
         val distance = calculateDistance(rssi, frequency)
 
-        var capabilities = "Unknown"
+        var capabilities = ""
         var bandwidth = 20
-
         try {
             val scanResults = wifiManager.scanResults
-            val match = scanResults.find { it.BSSID == bssid }
+            val match = scanResults?.find { it.BSSID.equals(bssid, ignoreCase = true) }
             if (match != null) {
-                capabilities = match.capabilities
+                capabilities = match.capabilities ?: ""
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     bandwidth = when (match.channelWidth) {
                         ScanResult.CHANNEL_WIDTH_20MHZ -> 20
@@ -71,38 +103,32 @@ object WiFiUtils {
                     }
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (_: Exception) { capabilities = "" }
+        val securityType = getSecurityType(context)
+        val halfWidth = if (bandwidth > 0 && frequency > 0) bandwidth / 2 else 0
+        val frequencyRange = if (halfWidth > 0 && frequency > 0) "${frequency - halfWidth} - ${frequency + halfWidth}" else ""
+
+        var standard = ""
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && wifiInfo != null) {
+            try {
+                standard = when (wifiInfo.wifiStandard) {
+                    ScanResult.WIFI_STANDARD_LEGACY -> "802.11a/b/g"
+                    ScanResult.WIFI_STANDARD_11N -> "Wi-Fi 4 (802.11n)"
+                    ScanResult.WIFI_STANDARD_11AC -> "Wi-Fi 5 (802.11ac)"
+                    ScanResult.WIFI_STANDARD_11AX -> "Wi-Fi 6 (802.11ax)"
+                    ScanResult.WIFI_STANDARD_11BE -> "Wi-Fi 7 (802.11be)"
+                    else -> ""
+                }
+            } catch (_: Exception) { standard = "" }
         }
 
-        val securityType = getSecurityType(capabilities)
-
-        val halfWidth = bandwidth / 2
-        val rangeStart = frequency - halfWidth
-        val rangeEnd = frequency + halfWidth
-        val frequencyRange = "$rangeStart - $rangeEnd"
-
-        var standard = "Unknown/Legacy"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            standard = when (wifiInfo.wifiStandard) {
-                ScanResult.WIFI_STANDARD_LEGACY -> "802.11a/b/g"
-                ScanResult.WIFI_STANDARD_11N -> "Wi-Fi 4 (802.11n)"
-                ScanResult.WIFI_STANDARD_11AC -> "Wi-Fi 5 (802.11ac)"
-                ScanResult.WIFI_STANDARD_11AX -> "Wi-Fi 6 (802.11ax)"
-                ScanResult.WIFI_STANDARD_11BE -> "Wi-Fi 7 (802.11be)"
-                else -> "Unknown"
-            }
-        }
-
-        val ipAddr = intToIp(dhcpInfo.ipAddress)
-        val ipv6Addr = getIPv6Address(interfaceName)
-        val gateway = intToIp(dhcpInfo.gateway)
-
-        val subnetMask = getRealSubnetMask(context) ?: "0.0.0.0"
-
-        val dns1 = intToIp(dhcpInfo.dns1)
-        val dns2 = intToIp(dhcpInfo.dns2)
-        val leaseTime = dhcpInfo.leaseDuration / 60
+        val ipAddr = safeIp(intToIp(dhcpInfo?.ipAddress ?: 0))
+        val ipv6Addr = safeIp(getIPv6Address(interfaceName))
+        val gateway = safeIp(intToIp(dhcpInfo?.gateway ?: 0))
+        val dns1 = safeIp(intToIp(dhcpInfo?.dns1 ?: 0))
+        val dns2 = safeIp(intToIp(dhcpInfo?.dns2 ?: 0))
+        val subnetMask = safeIp(getRealSubnetMask(context))
+        val leaseTime = try { (dhcpInfo?.leaseDuration ?: 0) / 60 } catch (_: Exception) { 0 }
 
         return WiFiFullInfo(
             ssid = ssid,
@@ -130,33 +156,63 @@ object WiFiUtils {
         )
     }
 
-    private fun getSecurityType(caps: String): String {
-        val upper = caps.uppercase()
-        return when {
-            upper.contains("EAP") -> "EAP"
-            upper.contains("PSK") || upper.contains("SAE") -> "WPA/WPA2-PSK"
-            upper.contains("WEP") -> "WEP"
-            upper.contains("WPA") || upper.contains("RSN") -> "WPA/WPA2"
-            else -> "Open"
+    private fun safeIp(ip: String?): String {
+        return if (ip == null || ip == "0.0.0.0" || ip == "Unavailable") "0.0.0.0" else ip
+    }
+
+    @SuppressLint("MissingPermission")
+    fun getSecurityType(context: Context): String {
+        val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val wifiInfo = wifiManager.connectionInfo
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when (wifiInfo.currentSecurityType) {
+                WifiInfo.SECURITY_TYPE_OPEN -> "Open"
+                WifiInfo.SECURITY_TYPE_WEP -> "WEP"
+                WifiInfo.SECURITY_TYPE_PSK -> "WPA/WPA2-PSK"
+                WifiInfo.SECURITY_TYPE_EAP -> "EAP"
+                WifiInfo.SECURITY_TYPE_SAE -> "WPA3-SAE"
+                WifiInfo.SECURITY_TYPE_OWE -> "OWE"
+                WifiInfo.SECURITY_TYPE_WAPI_PSK -> "WAPI-PSK"
+                WifiInfo.SECURITY_TYPE_WAPI_CERT -> "WAPI-CERT"
+                else -> "Unknown"
+            }
+        } else {
+            try {
+                val scanResults = wifiManager.scanResults
+                val bssid = wifiInfo.bssid ?: return "Unknown"
+                val result = scanResults.find { it.BSSID == bssid } ?: return "Unknown"
+                val caps = result.capabilities.uppercase()
+                when {
+                    caps.contains("WEP") -> "WEP"
+                    caps.contains("PSK") -> "WPA/WPA2-PSK"
+                    caps.contains("SAE") -> "WPA3-SAE"
+                    caps.contains("EAP") -> "EAP"
+                    caps.contains("OWE") -> "OWE"
+                    else -> "Open"
+                }
+            } catch (e: Exception) {
+                "Unknown"
+            }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun getRealSubnetMask(context: Context): String? {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val nw = cm.activeNetwork ?: return null
-        val lp: LinkProperties = cm.getLinkProperties(nw) ?: return null
-
-        for (la in lp.linkAddresses) {
-            val prefix = la.prefixLength
-            return prefixToMask(prefix)
-        }
-        return null
+        return try {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val nw = cm.activeNetwork ?: return null
+            val lp: LinkProperties = cm.getLinkProperties(nw) ?: return null
+            for (la in lp.linkAddresses) return prefixToMask(la.prefixLength)
+            null
+        } catch (e: Exception) { null }
     }
 
     private fun prefixToMask(prefix: Int): String {
-        val mask = (-1 shl (32 - prefix))
-        return "${mask shr 24 and 0xff}.${mask shr 16 and 0xff}.${mask shr 8 and 0xff}.${mask and 0xff}"
+        return try {
+            val mask = (-1 shl (32 - prefix))
+            "${mask shr 24 and 0xff}.${mask shr 16 and 0xff}.${mask shr 8 and 0xff}.${mask and 0xff}"
+        } catch (_: Exception) { "" }
     }
 
     private fun getFrequencyBand(freq: Int): String {
@@ -165,17 +221,16 @@ object WiFiUtils {
             freq in 4900..5925 -> "5 GHz"
             freq in 5925..7125 -> "6 GHz"
             freq > 50000 -> "60 GHz"
-            else -> "Unknown"
+            else -> ""
         }
     }
 
     private fun intToIp(i: Int): String {
-        return if (i == 0) "0.0.0.0"
-        else "${i and 0xFF}.${i shr 8 and 0xFF}.${i shr 16 and 0xFF}.${i shr 24 and 0xFF}"
+        return if (i == 0) "0.0.0.0" else "${i and 0xFF}.${i shr 8 and 0xFF}.${i shr 16 and 0xFF}.${i shr 24 and 0xFF}"
     }
 
     private fun getIPv6Address(interfaceName: String?): String {
-        if (interfaceName == null) return "Unavailable"
+        if (interfaceName == null) return ""
         return try {
             val interfaces = NetworkInterface.getNetworkInterfaces()
             while (interfaces.hasMoreElements()) {
@@ -192,21 +247,8 @@ object WiFiUtils {
                     }
                 }
             }
-            "Unavailable"
-        } catch (e: Exception) {
-            "Unavailable"
-        }
-    }
-
-    private fun getChannelFromFrequency(freq: Int): Int {
-        return when {
-            freq == 2484 -> 14
-            freq < 2484 -> (freq - 2407) / 5
-            freq in 4910..4980 -> (freq - 4000) / 5
-            freq < 5935 -> (freq - 5000) / 5
-            freq >= 5935 -> (freq - 5940) / 5
-            else -> 0
-        }
+            ""
+        } catch (e: Exception) { "" }
     }
 
     private fun getInterfaceName(): String? {
@@ -217,13 +259,24 @@ object WiFiUtils {
                 if (intf.name.contains("wlan")) return intf.name
             }
             null
-        } catch (e: Exception) {
-            null
-        }
+        } catch (e: Exception) { null }
     }
 
     private fun calculateDistance(rssi: Int, freqMHz: Int): Double {
+        if (rssi == 0 || freqMHz == 0) return 0.0
         val exp = (27.55 - (20 * log10(freqMHz.toDouble())) + abs(rssi)) / 20.0
         return String.format("%.1f", 10.0.pow(exp)).toDouble()
     }
+
+    private fun getChannelFromFrequency(freq: Int): Int {
+        return when {
+            freq == 2484 -> 14
+            freq in 2412..2472 -> (freq - 2407) / 5
+            freq in 4910..4980 -> (freq - 4000) / 5
+            freq in 5000..5935 -> (freq - 5000) / 5
+            freq >= 5935 -> (freq - 5940) / 5
+            else -> 0
+        }
+    }
+
 }
