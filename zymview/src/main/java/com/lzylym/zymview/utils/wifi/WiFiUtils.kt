@@ -279,4 +279,100 @@ object WiFiUtils {
         }
     }
 
+    @SuppressLint("MissingPermission")
+    fun getNearbyWiFiList(context: Context): List<WiFiFullInfo> {
+        val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            ?: return emptyList()
+
+        val hasLocationPermission = ActivityCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val scanResults: List<ScanResult> = try {
+            wifiManager.scanResults ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        val list = mutableListOf<WiFiFullInfo>()
+        for (result in scanResults) {
+            val ssid = try { result.SSID ?: "" } catch (_: Exception) { "" }
+            val bssid = try { result.BSSID ?: "" } catch (_: Exception) { "" }
+            val frequency = try { result.frequency } catch (_: Exception) { 0 }
+            val channel = if (frequency > 0) getChannelFromFrequency(frequency) else 0
+            val frequencyBand = if (frequency > 0) getFrequencyBand(frequency) else ""
+            val capabilities = try { result.capabilities ?: "" } catch (_: Exception) { "" }
+            val securityType = parseSecurityTypeFromCapabilities(capabilities)
+
+            val level = try { WifiManager.calculateSignalLevel(result.level, 5) } catch (_: Exception) { 0 }
+            val distance = calculateDistance(result.level, frequency)
+            val bandwidth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                try {
+                    when (result.channelWidth) {
+                        ScanResult.CHANNEL_WIDTH_20MHZ -> 20
+                        ScanResult.CHANNEL_WIDTH_40MHZ -> 40
+                        ScanResult.CHANNEL_WIDTH_80MHZ -> 80
+                        ScanResult.CHANNEL_WIDTH_160MHZ -> 160
+                        5 -> 320
+                        else -> 20
+                    }
+                } catch (_: Exception) { 20 }
+            } else 20
+
+            val frequencyRange = if (frequency > 0) "${frequency - bandwidth / 2} - ${frequency + bandwidth / 2}" else ""
+            val wifiStandard = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                try {
+                    when (result.wifiStandard) {
+                        ScanResult.WIFI_STANDARD_LEGACY -> "802.11a/b/g"
+                        ScanResult.WIFI_STANDARD_11N -> "Wi-Fi 4 (802.11n)"
+                        ScanResult.WIFI_STANDARD_11AC -> "Wi-Fi 5 (802.11ac)"
+                        ScanResult.WIFI_STANDARD_11AX -> "Wi-Fi 6 (802.11ax)"
+                        ScanResult.WIFI_STANDARD_11BE -> "Wi-Fi 7 (802.11be)"
+                        else -> ""
+                    }
+                } catch (_: Exception) { "" }
+            } else ""
+
+            list.add(
+                WiFiFullInfo(
+                    ssid = ssid,
+                    bssid = bssid,
+                    interfaceName = "",
+                    rssi = result.level,
+                    level = level,
+                    frequency = frequency,
+                    frequencyBand = frequencyBand,
+                    channel = channel,
+                    linkSpeed = 0,
+                    distanceMeters = distance,
+                    bandwidth = bandwidth,
+                    frequencyRange = frequencyRange,
+                    wifiStandard = wifiStandard,
+                    ipAddress = "",
+                    ipv6Address = "",
+                    gateway = "",
+                    subnetMask = "",
+                    dns1 = "",
+                    dns2 = "",
+                    leaseDuration = 0,
+                    capabilities = capabilities,
+                    securityType = securityType
+                )
+            )
+        }
+
+        return list
+    }
+
+    private fun parseSecurityTypeFromCapabilities(caps: String): String {
+        val upper = caps.uppercase()
+        return when {
+            upper.contains("WEP") -> "WEP"
+            upper.contains("PSK") -> "WPA/WPA2-PSK"
+            upper.contains("SAE") -> "WPA3-SAE"
+            upper.contains("EAP") -> "EAP"
+            upper.contains("OWE") -> "OWE"
+            else -> "Open"
+        }
+    }
 }
