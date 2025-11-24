@@ -425,4 +425,10 @@ object WiFiUtils {
             false
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    fun isWifiConnectedWifi(context: Context, ssid:String, bssid:String):Boolean{
+        val current= getCurrentWiFiInfo(context)
+        return ssid==current.ssid&&bssid==current.bssid
+    }
 }
