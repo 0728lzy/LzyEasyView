@@ -15,6 +15,7 @@ object CPUUtils {
         intervalMs: Long = 1000,
         callback: (Float?) -> Unit
     ) {
+        releaseCpuTemperatureMonitor()
         if (tempMonitor == null) tempMonitor = CpuTempMonitor(context)
         tempMonitor?.startMonitoring(times, intervalMs, callback)
     }
@@ -35,6 +36,7 @@ object CPUUtils {
         intervalMs: Long = 1000,
         callback: (Float) -> Unit
     ) {
+        releaseCpuUsageRateMonitor()
         if (usageMonitor == null) usageMonitor = CpuUsageRateMonitor(context)
         usageMonitor?.startMonitoring(intervalMs, callback)
     }
