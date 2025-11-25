@@ -44,7 +44,7 @@ object DeviceInfoUtils {
                 info.hardwareName = Build.HARDWARE
             }
         }
-
+        parseProcCpuInfo(info)
         readSysCpuInfo(info)
         info.isVulkanSupported = if (hasVulkanSupport(context)) "支持" else "不支持"
 
