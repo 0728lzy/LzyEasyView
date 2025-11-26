@@ -9,11 +9,10 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import android.view.animation.LinearInterpolator
 import androidx.core.content.ContextCompat
 import com.lzylym.zymview.R
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
 class ZYMArcProgressBar @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -21,14 +20,13 @@ class ZYMArcProgressBar @JvmOverloads constructor(
 
     private var max = 100f
     private var min = 0f
-
     private var progress = 0f
     private var targetProgress = 0f
-
     private var strokeWidth = 20f
 
     private var animator: ValueAnimator? = null
     private var animDuration = 1000L
+    private var isAnimLinear = false
 
     private var progressColorInt = Color.GREEN
     private var progressDrawable: Drawable? = null
@@ -48,16 +46,16 @@ class ZYMArcProgressBar @JvmOverloads constructor(
     private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
     private val rectF = RectF()
+    private val normalizedBounds = RectF()
 
     init {
         val ta = context.obtainStyledAttributes(attrs, R.styleable.ZYMArcProgressBar)
-
         max = ta.getFloat(R.styleable.ZYMArcProgressBar_zym_max, 100f)
         min = ta.getFloat(R.styleable.ZYMArcProgressBar_zym_min, 0f)
         targetProgress = ta.getFloat(R.styleable.ZYMArcProgressBar_zym_progress, min).coerceIn(min, max)
         progress = targetProgress
-
         strokeWidth = ta.getDimension(R.styleable.ZYMArcProgressBar_zym_stroke_width, 20f)
 
         if (ta.hasValue(R.styleable.ZYMArcProgressBar_zym_progress_color)) {
@@ -66,9 +64,7 @@ class ZYMArcProgressBar @JvmOverloads constructor(
                 progressColorInt = ta.getColor(R.styleable.ZYMArcProgressBar_zym_progress_color, Color.GREEN)
             } else {
                 val resId = ta.getResourceId(R.styleable.ZYMArcProgressBar_zym_progress_color, 0)
-                if (resId != 0) {
-                    progressDrawable = ContextCompat.getDrawable(context, resId)
-                }
+                if (resId != 0) progressDrawable = ContextCompat.getDrawable(context, resId)
             }
         }
 
@@ -84,19 +80,16 @@ class ZYMArcProgressBar @JvmOverloads constructor(
         labelActiveColor = ta.getColor(R.styleable.ZYMArcProgressBar_zym_label_active_color, Color.BLACK)
         labelInactiveColor = ta.getColor(R.styleable.ZYMArcProgressBar_zym_label_inactive_color, Color.GRAY)
 
+        isAnimLinear = ta.getBoolean(R.styleable.ZYMArcProgressBar_zym_anim_linear, false)
         ta.recycle()
+
+        computeNormalizedBounds()
         initPaints()
     }
 
     private fun initPaints() {
         updatePaintStyles()
-
-        if (progressDrawable != null) {
-            updateProgressShader()
-        } else {
-            progressPaint.color = progressColorInt
-        }
-
+        if (progressDrawable != null) updateProgressShader() else progressPaint.color = progressColorInt
         labelPaint.textSize = labelTextSize
         labelPaint.textAlign = Paint.Align.CENTER
     }
@@ -110,6 +103,113 @@ class ZYMArcProgressBar @JvmOverloads constructor(
         progressPaint.style = Paint.Style.STROKE
         progressPaint.strokeWidth = strokeWidth
         progressPaint.strokeCap = if (isRoundCap) Paint.Cap.ROUND else Paint.Cap.BUTT
+    }
+
+    private fun computeNormalizedBounds() {
+        if (abs(maxSweepAngle) >= 360f) {
+            normalizedBounds.set(-1f, -1f, 1f, 1f)
+            return
+        }
+
+        val startRad = Math.toRadians(startAngle.toDouble())
+        val endRad = Math.toRadians((startAngle + maxSweepAngle).toDouble())
+
+        var minX = cos(startRad).toFloat()
+        var maxX = minX
+        var minY = sin(startRad).toFloat()
+        var maxY = minY
+
+        fun check(angleRad: Double) {
+            val x = cos(angleRad).toFloat()
+            val y = sin(angleRad).toFloat()
+            minX = min(minX, x)
+            maxX = max(maxX, x)
+            minY = min(minY, y)
+            maxY = max(maxY, y)
+        }
+
+        check(endRad)
+
+        val start = startAngle
+        val end = startAngle + maxSweepAngle
+        val realMin = min(start, end).toInt()
+        val realMax = max(start, end).toInt()
+
+        for (i in realMin..realMax) {
+            if (i % 90 == 0) {
+                check(Math.toRadians(i.toDouble()))
+            }
+        }
+
+        normalizedBounds.set(minX, minY, maxX, maxY)
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val widthMode = MeasureSpec.getMode(widthMeasureSpec)
+        val widthSize = MeasureSpec.getSize(widthMeasureSpec)
+        val heightMode = MeasureSpec.getMode(heightMeasureSpec)
+        val heightSize = MeasureSpec.getSize(heightMeasureSpec)
+
+        val nWidth = normalizedBounds.width()
+        val nHeight = normalizedBounds.height()
+
+        var radius = 0f
+
+        if (widthMode != MeasureSpec.UNSPECIFIED) {
+            val availableWidth = widthSize - paddingLeft - paddingRight - strokeWidth
+            radius = availableWidth / nWidth
+        } else if (heightMode != MeasureSpec.UNSPECIFIED) {
+            val availableHeight = heightSize - paddingTop - paddingBottom - strokeWidth
+            radius = availableHeight / nHeight
+        } else {
+            radius = 100f.dp
+        }
+
+        val neededWidth = (radius * nWidth + strokeWidth + paddingLeft + paddingRight).toInt()
+        val neededHeight = (radius * nHeight + strokeWidth + paddingTop + paddingBottom).toInt()
+
+        val finalWidth = resolveSize(neededWidth, widthMeasureSpec)
+        val finalHeight = resolveSize(neededHeight, heightMeasureSpec)
+
+        setMeasuredDimension(finalWidth, finalHeight)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        calculateRectF(w, h)
+        if (progressDrawable != null) {
+            updateProgressShader()
+        }
+    }
+
+    private fun calculateRectF(w: Int, h: Int) {
+        val availableW = w - paddingLeft - paddingRight - strokeWidth
+        val availableH = h - paddingTop - paddingBottom - strokeWidth
+
+        val nW = normalizedBounds.width()
+        val nH = normalizedBounds.height()
+
+        val radiusW = if (nW > 0) availableW / nW else 0f
+        val radiusH = if (nH > 0) availableH / nH else 0f
+        val radius = min(radiusW, radiusH)
+
+        val contentLeft = paddingLeft + strokeWidth / 2
+        val contentTop = paddingTop + strokeWidth / 2
+
+        val actualContentW = radius * nW
+        val actualContentH = radius * nH
+        val offsetX = (availableW - actualContentW) / 2
+        val offsetY = (availableH - actualContentH) / 2
+
+        val cx = contentLeft + offsetX - (normalizedBounds.left * radius)
+        val cy = contentTop + offsetY - (normalizedBounds.top * radius)
+
+        rectF.set(
+            cx - radius,
+            cy - radius,
+            cx + radius,
+            cy + radius
+        )
     }
 
     private fun updateProgressShader() {
@@ -129,24 +229,6 @@ class ZYMArcProgressBar @JvmOverloads constructor(
             progressPaint.shader = shader
             progressPaint.color = Color.WHITE
         }
-    }
-
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        calculateRectF(w, h)
-        if (progressDrawable != null) {
-            updateProgressShader()
-        }
-    }
-
-    private fun calculateRectF(w: Int, h: Int) {
-        val padding = strokeWidth / 2
-        rectF.set(
-            padding + paddingLeft,
-            padding + paddingTop,
-            w - padding - paddingRight,
-            h - padding - paddingBottom
-        )
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -170,14 +252,12 @@ class ZYMArcProgressBar @JvmOverloads constructor(
     private fun drawLabels(canvas: Canvas) {
         val centerX = rectF.centerX()
         val centerY = rectF.centerY()
-        val radius = (rectF.width() / 2) - (strokeWidth / 2) - labelDistance - (labelTextSize / 2)
+        val radius = (rectF.width() / 2) - labelDistance - (labelTextSize / 2)
 
         val range = max - min
         val stepValue = range / (labelCount - 1)
-
         val isFullCircle = abs(maxSweepAngle) >= 360f
         val drawCount = if (isFullCircle) labelCount - 1 else labelCount
-
         val fontMetrics = labelPaint.fontMetrics
         val textDy = (fontMetrics.descent - fontMetrics.ascent) / 2 - fontMetrics.descent
 
@@ -197,11 +277,11 @@ class ZYMArcProgressBar @JvmOverloads constructor(
         }
     }
 
-    private fun smoothUpdate() {
+    private fun smoothUpdate(duration: Long = this.animDuration) {
         animator?.cancel()
         animator = ValueAnimator.ofFloat(progress, targetProgress).apply {
-            duration = animDuration
-            interpolator = DecelerateInterpolator()
+            this.duration = duration
+            interpolator = if (isAnimLinear) LinearInterpolator() else DecelerateInterpolator()
             addUpdateListener { animation ->
                 this@ZYMArcProgressBar.progress = animation.animatedValue as Float
                 invalidate()
@@ -235,10 +315,14 @@ class ZYMArcProgressBar @JvmOverloads constructor(
         }
 
     fun setProgress(value: Float) {
+        setProgress(value, this.animDuration)
+    }
+
+    fun setProgress(value: Float, duration: Long) {
         val newTarget = value.coerceIn(min, max)
         if (this.targetProgress != newTarget) {
             this.targetProgress = newTarget
-            smoothUpdate()
+            smoothUpdate(duration)
         }
     }
 
@@ -252,8 +336,7 @@ class ZYMArcProgressBar @JvmOverloads constructor(
 
     fun setStrokeWidth(widthDp: Float) {
         this.strokeWidth = widthDp.dp
-        calculateRectF(width, height)
-        updatePaintStyles()
+        requestLayout()
         invalidate()
     }
 
@@ -280,7 +363,8 @@ class ZYMArcProgressBar @JvmOverloads constructor(
     fun setAngles(startAngle: Float, sweepAngle: Float) {
         this.startAngle = startAngle
         this.maxSweepAngle = sweepAngle
-        updatePaintStyles()
+        computeNormalizedBounds()
+        requestLayout()
         invalidate()
     }
 
@@ -288,6 +372,10 @@ class ZYMArcProgressBar @JvmOverloads constructor(
         this.isRoundCap = enable
         updatePaintStyles()
         invalidate()
+    }
+
+    fun setAnimLinear(enable: Boolean) {
+        this.isAnimLinear = enable
     }
 
     fun setAnimDuration(duration: Long) {

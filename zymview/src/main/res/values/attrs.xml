@@ -165,6 +165,8 @@
         <attr name="zym_label_active_color" format="color" />
         <!-- 内侧刻度非激活状态颜色（未达到进度），默认灰色 -->
         <attr name="zym_label_inactive_color" format="color" />
+        <!-- 是否使用匀速动画，默认为 false (减速) -->
+        <attr format="boolean" name="zym_anim_linear"/>
     </declare-styleable>
 
 </resources>
