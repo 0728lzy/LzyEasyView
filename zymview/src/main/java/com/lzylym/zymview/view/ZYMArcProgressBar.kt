@@ -1,4 +1,4 @@
-package com.lzylym.zymview.view
+package com.lazyliuzy.commonui.widget
 
 import android.animation.ValueAnimator
 import android.content.Context
@@ -233,29 +233,53 @@ class ZYMArcProgressBar @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawArc(rectF, startAngle, maxSweepAngle, false, trackPaint)
+
+        val radius = rectF.width() / 2f
+        if (radius <= 0) return
+
+        val needOffset = isRoundCap && abs(maxSweepAngle) < 360f
+        val offsetAngle = if (needOffset) {
+            val angleRad = (strokeWidth / 2f) / radius
+            Math.toDegrees(angleRad.toDouble()).toFloat()
+        } else {
+            0f
+        }
+
+        val sign = if (maxSweepAngle >= 0) 1f else -1f
+
+        val drawStartAngle = startAngle + (sign * offsetAngle)
+        val drawTrackSweep = maxSweepAngle - (sign * 2 * offsetAngle)
+
+        if (abs(drawTrackSweep) > 0.01f && (maxSweepAngle * drawTrackSweep > 0)) {
+            canvas.drawArc(rectF, drawStartAngle, drawTrackSweep, false, trackPaint)
+        }
 
         val range = max - min
+        if (range <= 0) return
         val currentVal = (progress - min).coerceIn(0f, range)
-        val ratio = if (range > 0) currentVal / range else 0f
-        val currentSweepAngle = maxSweepAngle * ratio
+        val ratio = currentVal / range
 
-        if (abs(currentSweepAngle) > 0.1f) {
-            canvas.drawArc(rectF, startAngle, currentSweepAngle, false, progressPaint)
+        if (ratio > 0) {
+            var currentSweepAngle = (maxSweepAngle * ratio) - (sign * 2 * offsetAngle)
+            if (currentSweepAngle * sign <= 0) {
+                currentSweepAngle = 0.1f * sign
+            }
+            canvas.drawArc(rectF, drawStartAngle, currentSweepAngle, false, progressPaint)
         }
 
         if (showLabels) {
-            drawLabels(canvas)
+            drawLabels(canvas, drawStartAngle, drawTrackSweep)
         }
     }
 
-    private fun drawLabels(canvas: Canvas) {
+    private fun drawLabels(canvas: Canvas, effectiveStartAngle: Float, effectiveSweepAngle: Float) {
         val centerX = rectF.centerX()
         val centerY = rectF.centerY()
-        val radius = (rectF.width() / 2) - labelDistance - (labelTextSize / 2)
+        val arcRadius = rectF.width() / 2f
+        val innerEdgeRadius = arcRadius - (strokeWidth / 2f)
+        val radius = innerEdgeRadius - labelDistance - (labelTextSize / 2f)
 
-        val range = max - min
-        val stepValue = range / (labelCount - 1)
+        val stepValue = (max - min) / (labelCount - 1)
         val isFullCircle = abs(maxSweepAngle) >= 360f
         val drawCount = if (isFullCircle) labelCount - 1 else labelCount
         val fontMetrics = labelPaint.fontMetrics
@@ -266,13 +290,13 @@ class ZYMArcProgressBar @JvmOverloads constructor(
             labelPaint.color = if (tickValue <= progress + 0.01f) labelActiveColor else labelInactiveColor
 
             val angleRatio = i.toFloat() / (labelCount - 1)
-            val angleDeg = startAngle + (maxSweepAngle * angleRatio)
+            val angleDeg = effectiveStartAngle + (effectiveSweepAngle * angleRatio)
             val angleRad = Math.toRadians(angleDeg.toDouble())
 
             val x = centerX + radius * cos(angleRad).toFloat()
             val y = centerY + radius * sin(angleRad).toFloat()
 
-            val text = tickValue.toInt().toString()
+            val text = if (tickValue % 1 == 0f) tickValue.toInt().toString() else String.format("%.1f", tickValue)
             canvas.drawText(text, x, y + textDy, labelPaint)
         }
     }
