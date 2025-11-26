@@ -1,4 +1,4 @@
-package com.lazyliuzy.commonui.widget
+package com.lzylym.zymview.view
 
 import android.animation.ValueAnimator
 import android.content.Context
