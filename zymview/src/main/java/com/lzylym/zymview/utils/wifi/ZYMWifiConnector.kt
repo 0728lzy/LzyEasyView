@@ -25,6 +25,7 @@ object ZYMWifiConnector {
 
     private const val TAG = "WifiConnector"
     const val REQUEST_CODE_WIFI_ADD = 1010
+    const val REQUEST_CODE_WIFI_ADD_REAL = 1011
 
     fun connectWifi(activity: Activity, ssid: String, password: String,isReal:Boolean) {
         when {
@@ -63,7 +64,7 @@ object ZYMWifiConnector {
         list.add(realSuggestion)
         val intent = Intent(Settings.ACTION_WIFI_ADD_NETWORKS)
         intent.putParcelableArrayListExtra(Settings.EXTRA_WIFI_NETWORK_LIST, list)
-        activity.startActivity(intent)
+        activity.startActivityForResult(intent, REQUEST_CODE_WIFI_ADD_REAL)
     }
 
     private fun generateRandomPassword(): String {
