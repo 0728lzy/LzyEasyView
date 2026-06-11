@@ -1,5 +1,6 @@
 package com.lzylym.zymview.reminder
 
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -35,7 +36,17 @@ class ReminderFullScreenActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tv_content).text = content
 
         findViewById<Button>(R.id.btn_close).setOnClickListener {
-            ReminderReceiver.cancelReminder(this@ReminderFullScreenActivity, notificationId)
+            closeReminder(notificationId)
+        }
+    }
+
+    private fun closeReminder(notificationId: Int) {
+        ReminderService.stop(this, notificationId)
+        ReminderReceiver.cancelReminder(this, notificationId)
+        (getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager)?.cancel(notificationId)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            finishAndRemoveTask()
+        } else {
             finish()
         }
     }
