@@ -8,6 +8,6 @@ buildscript {
         // Android Gradle Plugin
         classpath("com.android.tools.build:gradle:7.3.1")
         // Kotlin Gradle Plugin
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21")
     }
 }

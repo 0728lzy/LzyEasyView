@@ -30,16 +30,30 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+        apiVersion = "1.6"
+        languageVersion = "1.6"
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin-stdlib")) {
+                useVersion("1.6.21")
+            }
+        }
     }
 }
 
 dependencies {
     // AndroidX 核心
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.core:core-ktx:1.7.0")
+    implementation("androidx.appcompat:appcompat:1.4.2")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
     // Material 组件
-    implementation("com.google.android.material:material:1.9.0")
+    implementation("com.google.android.material:material:1.6.0")
 
     // 测试
     testImplementation("junit:junit:4.13.2")

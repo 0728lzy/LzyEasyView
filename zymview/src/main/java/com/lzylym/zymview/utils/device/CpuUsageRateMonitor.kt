@@ -306,7 +306,7 @@ class CpuUsageRateMonitor(context: Context) {
         val direction = if (Random.nextBoolean()) 1 else -1
         val delta = Random.nextFloat() * 3f + 1f
 
-        lastSimulatedValue += (direction * delta)
+        lastSimulatedValue += (direction.toFloat() * delta)
 
         if (lastSimulatedValue < 3f) lastSimulatedValue = 3f + Random.nextFloat() * 2f
         if (lastSimulatedValue > 45f) lastSimulatedValue = 45f - Random.nextFloat() * 2f
