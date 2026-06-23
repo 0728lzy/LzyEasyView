@@ -18,6 +18,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import java.net.Inet6Address
 import java.net.NetworkInterface
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.log10
 import kotlin.math.pow
@@ -46,7 +47,8 @@ object WiFiUtils {
         dns2 = "",
         leaseDuration = 0,
         capabilities = "",
-        securityType = ""
+        securityType = "",
+        isMeshNetwork = false
     )
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -90,9 +92,12 @@ object WiFiUtils {
 
         var capabilities = ""
         var bandwidth = 20
+        var currentScanResult: ScanResult? = null
+        var isMeshNetwork = false
         try {
             val scanResults = wifiManager.scanResults
             val match = scanResults?.find { it.BSSID.equals(bssid, ignoreCase = true) }
+            currentScanResult = match
             if (match != null) {
                 capabilities = match.capabilities ?: ""
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -106,6 +111,7 @@ object WiFiUtils {
                     }
                 }
             }
+            isMeshNetwork = detectMeshNetwork(scanResults.orEmpty(), currentScanResult, ssid)
         } catch (_: Exception) { capabilities = "" }
         val securityType = getSecurityType(context)
         val halfWidth = if (bandwidth > 0 && frequency > 0) bandwidth / 2 else 0
@@ -155,7 +161,8 @@ object WiFiUtils {
             dns2 = dns2,
             leaseDuration = leaseTime,
             capabilities = capabilities,
-            securityType = securityType
+            securityType = securityType,
+            isMeshNetwork = isMeshNetwork
         )
     }
 
@@ -359,16 +366,27 @@ object WiFiUtils {
                     dns2 = "",
                     leaseDuration = 0,
                     capabilities = capabilities,
-                    securityType = securityType
+                    securityType = securityType,
+                    isMeshNetwork = detectMeshNetwork(scanResults, result, ssid)
                 )
             )
         }
 
         return list
+            .groupBy { info ->
+                if (info.isMeshNetwork && info.ssid.isNotBlank()) {
+                    "MESH:${info.ssid}"
+                } else {
+                    "BSSID:${info.bssid.ifBlank { "${info.ssid}_${info.frequency}" }}"
+                }
+            }
+            .values
+            .mapNotNull { group -> group.maxByOrNull { it.rssi } }
+            .sortedByDescending { it.rssi }
     }
 
     private fun parseSecurityTypeFromCapabilities(caps: String): String {
-        val upper = caps.uppercase()
+        val upper = caps.uppercase(Locale.ROOT)
         return when {
             upper.contains("WEP") -> "WEP"
             upper.contains("PSK") -> "WPA/WPA2-PSK"
@@ -377,6 +395,24 @@ object WiFiUtils {
             upper.contains("OWE") -> "OWE"
             else -> "Open"
         }
+    }
+
+    private fun detectMeshNetwork(
+        scanResults: List<ScanResult>,
+        currentScanResult: ScanResult?,
+        currentSsid: String
+    ): Boolean {
+        val currentCapabilities = currentScanResult?.capabilities?.uppercase(Locale.ROOT).orEmpty()
+        if (currentCapabilities.contains("MESH")) {
+            return true
+        }
+        val sameSsidBssids = scanResults
+            .asSequence()
+            .filter { it.SSID == currentSsid && !it.BSSID.isNullOrBlank() }
+            .map { it.BSSID }
+            .distinct()
+            .count()
+        return sameSsidBssids >= 2
     }
 
     fun getNetworkType(context: Context): String {

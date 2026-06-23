@@ -22,5 +22,6 @@ data class WiFiFullInfo(
     val dns2: String,
     val leaseDuration: Int,
     val capabilities: String,
-    val securityType: String
+    val securityType: String,
+    val isMeshNetwork: Boolean
 )
