@@ -28,6 +28,7 @@ object WiFiUtils {
     private val EMPTY_INFO = WiFiFullInfo(
         ssid = "",
         bssid = "",
+        bssidList = emptyList(),
         interfaceName = "",
         rssi = 0,
         level = 0,
@@ -142,6 +143,11 @@ object WiFiUtils {
         return WiFiFullInfo(
             ssid = ssid,
             bssid = bssid,
+            bssidList = if (isMeshNetwork && ssid.isNotBlank()) {
+                getMeshBssidList(scanResults = try { wifiManager.scanResults ?: emptyList() } catch (_: Exception) { emptyList() }, ssid = ssid)
+            } else {
+                listOf(bssid).filter { it.isNotBlank() }
+            },
             interfaceName = interfaceName,
             rssi = rssi,
             level = level,
@@ -347,6 +353,7 @@ object WiFiUtils {
                 WiFiFullInfo(
                     ssid = ssid,
                     bssid = bssid,
+                    bssidList = listOf(bssid).filter { it.isNotBlank() },
                     interfaceName = "",
                     rssi = result.level,
                     level = level,
@@ -381,7 +388,21 @@ object WiFiUtils {
                 }
             }
             .values
-            .mapNotNull { group -> group.maxByOrNull { it.rssi } }
+            .mapNotNull { group ->
+                val strongest = group.maxByOrNull { it.rssi } ?: return@mapNotNull null
+                if (!strongest.isMeshNetwork || strongest.ssid.isBlank()) {
+                    strongest
+                } else {
+                    strongest.copy(
+                        bssidList = group
+                            .asSequence()
+                            .map { it.bssid }
+                            .filter { it.isNotBlank() }
+                            .distinct()
+                            .toList()
+                    )
+                }
+            }
             .sortedByDescending { it.rssi }
     }
 
@@ -413,6 +434,17 @@ object WiFiUtils {
             .distinct()
             .count()
         return sameSsidBssids >= 2
+    }
+
+    private fun getMeshBssidList(scanResults: List<ScanResult>, ssid: String): List<String> {
+        if (ssid.isBlank()) return emptyList()
+        return scanResults
+            .asSequence()
+            .filter { it.SSID == ssid }
+            .mapNotNull { it.BSSID }
+            .filter { it.isNotBlank() }
+            .distinct()
+            .toList()
     }
 
     fun getNetworkType(context: Context): String {

@@ -3,6 +3,7 @@ package com.lzylym.zymview.utils.wifi
 data class WiFiFullInfo(
     val ssid: String,
     val bssid: String,
+    val bssidList: List<String> = emptyList(),
     val interfaceName: String?,
     val rssi: Int,
     val level: Int,
